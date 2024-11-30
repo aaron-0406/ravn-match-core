@@ -1,14 +1,19 @@
-import Joi from 'joi';
+import dotenv from "dotenv";
+import Joi from "joi";
+
+dotenv.config();
 
 const envVarsSchema = Joi.object()
   .keys({
-    NODE_ENV: Joi.string().valid('production', 'development', 'test').required(),
+    NODE_ENV: Joi.string()
+      .valid("production", "development", "test")
+      .required(),
     PORT: Joi.number().default(3000),
   })
   .unknown();
 
 const { value: envVars, error } = envVarsSchema
-  .prefs({ errors: { label: 'key' } })
+  .prefs({ errors: { label: "key" } })
   .validate(process.env);
 
 if (error) {
@@ -16,7 +21,6 @@ if (error) {
 }
 
 export default {
-    env: envVars.NODE_ENV,
-    port: envVars.PORT,
+  env: envVars.NODE_ENV,
+  port: envVars.PORT,
 };
-  
