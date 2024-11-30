@@ -1,10 +1,8 @@
 import express, { Request, Response } from "express";
 import Boom from "boom";
-import { PrismaClient } from "@prisma/client";
 import routerApi from "./routes";
 
 const app = express();
-const prisma = new PrismaClient();
 
 app.use(express.json());
 
