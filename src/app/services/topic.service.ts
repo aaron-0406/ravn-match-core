@@ -1,7 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import boom from "boom";
-
-const prisma = new PrismaClient();
+import prisma from "../../client";
 
 export const listTopics = async () => {
   try {
