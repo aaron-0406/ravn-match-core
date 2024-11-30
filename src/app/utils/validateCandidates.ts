@@ -169,7 +169,7 @@ function normalizeScores(developers: TeamMemberWithDetails[]): TeamMemberWithDet
   
     return developers
       .map((developer) => ({
-        developerId: developer.id,
+        ...developer,
         score: calculateMatchScore(developer as any, project, priorities, levelMaps),
       }))
       .sort((a, b) => b.score - a.score) as any;
