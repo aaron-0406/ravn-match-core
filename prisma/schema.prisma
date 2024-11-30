@@ -136,6 +136,7 @@ model assignments {
   team_members_assignments_team_member_idToteam_members team_members?       @relation("assignments_team_member_idToteam_members", fields: [team_member_id], references: [id])
   time_slots                                            time_slots[]
   team_members_proposals                                team_members[]      @relation("proposals")
+  topics                                                topic[]
 }
 
 model attachments {
@@ -1546,8 +1547,9 @@ enum SlackMemberStatus {
 }
 
 model topic {
-  id        Int      @id @default(autoincrement())
-  name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            Int      @id @default(autoincrement())
+  name          String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  assignment    assignments[]
 }
