@@ -1,0 +1,1546 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model AssignmentsToTags {
+  assignment_id String      @db.Uuid
+  tag_id        String      @db.Uuid
+  is_primary    Boolean     @default(false)
+  assignments   assignments @relation(fields: [assignment_id], references: [id])
+  tags          tags        @relation(fields: [tag_id], references: [id])
+
+  @@unique([assignment_id, tag_id])
+}
+
+model WebhookToWebhookEvent {
+  A              String         @db.Uuid
+  B              String         @db.Uuid
+  webhooks       webhooks       @relation(fields: [A], references: [id], onDelete: Cascade)
+  webhook_events webhook_events @relation(fields: [B], references: [id], onDelete: Cascade)
+
+  @@unique([A, B], map: "_WebhookToWebhookEvent_AB_unique")
+  @@index([B], map: "_WebhookToWebhookEvent_B_index")
+  @@map("_WebhookToWebhookEvent")
+}
+
+model account_owner_reports {
+  id                                             String    @id @db.Uuid
+  health_score                                   Float?
+  status                                         String
+  positive_notes                                 String?
+  negative_notes                                 String?
+  created_at                                     DateTime  @default(now())
+  updated_at                                     DateTime?
+  author_id                                      String    @db.Uuid
+  client_id                                      String    @db.Uuid
+  deleted_at                                     DateTime?
+  reviewer_id                                    String?   @db.Uuid
+  users_account_owner_reports_author_idTousers   users     @relation("account_owner_reports_author_idTousers", fields: [author_id], references: [id])
+  clients                                        clients   @relation(fields: [client_id], references: [id])
+  users_account_owner_reports_reviewer_idTousers users?    @relation("account_owner_reports_reviewer_idTousers", fields: [reviewer_id], references: [id])
+}
+
+model account_owners_to_clients {
+  id                         String       @id @db.Uuid
+  client_id                  String       @db.Uuid
+  team_member_id             String       @db.Uuid
+  created_at                 DateTime     @default(now())
+  deleted_at                 DateTime?
+  clockify_external_group_id String?
+  clients                    clients      @relation(fields: [client_id], references: [id])
+  team_members               team_members @relation(fields: [team_member_id], references: [id])
+}
+
+model actions {
+  id         String   @id @db.Uuid
+  name       String
+  code       String   @unique
+  active     Boolean  @default(true)
+  created_at DateTime @default(now())
+}
+
+model activities {
+  id                 String           @id @db.Uuid
+  action             String
+  additional_info    Json
+  actor_id           String?          @db.Uuid
+  job_application_id String           @db.Uuid
+  created_at         DateTime         @default(now())
+  type               String?
+  cloud_task_name    String?
+  status             String           @default("SUCCESSFUL")
+  users              users?           @relation(fields: [actor_id], references: [id])
+  job_applications   job_applications @relation(fields: [job_application_id], references: [id])
+}
+
+model asset_categories {
+  id              String        @id @db.Uuid
+  title           String
+  organization_id String        @db.Uuid
+  organizations   organizations @relation(fields: [organization_id], references: [id])
+  assets          assets[]
+}
+
+model assets {
+  id               String           @id @db.Uuid
+  description      String
+  serial           String?
+  asset_date       DateTime?
+  asset_tag        String?
+  asset_cost       Float?
+  date_loaned      DateTime?
+  date_returned    DateTime?
+  details          String?
+  notes            String?
+  category_id      String           @db.Uuid
+  employee_id      String           @db.Uuid
+  asset_categories asset_categories @relation(fields: [category_id], references: [id])
+  employees        employees        @relation(fields: [employee_id], references: [id])
+}
+
+model assignments {
+  id                                                    String              @id @db.Uuid
+  client_id                                             String              @db.Uuid
+  team_member_id                                        String?             @db.Uuid
+  start_at                                              DateTime            @default(now())
+  end_at                                                DateTime?
+  is_team_leader                                        Boolean             @default(false)
+  is_flexible                                           Boolean             @default(true)
+  on_going                                              Boolean             @default(true)
+  billable                                              Boolean             @default(true)
+  created_at                                            DateTime            @default(now())
+  updated_at                                            DateTime?
+  enabled                                               Boolean             @default(true)
+  deleted                                               Boolean?            @default(false)
+  hourly_rate                                           Float?
+  notes                                                 String?
+  is_open_req                                           Boolean             @default(false)
+  seniorities                                           Json?
+  status                                                String?
+  clients_team_id                                       String?             @db.Uuid
+  hourly_cost                                           Float?
+  archived                                              Boolean             @default(false)
+  deleted_at                                            DateTime?
+  type                                                  String
+  clockify_external_group_id                            String?
+  assigned_by_id                                        String?             @db.Uuid
+  AssignmentsToTags                                     AssignmentsToTags[]
+  users                                                 users?              @relation(fields: [assigned_by_id], references: [id])
+  clients                                               clients             @relation(fields: [client_id], references: [id])
+  client_teams                                          client_teams?       @relation(fields: [clients_team_id], references: [id])
+  team_members_assignments_team_member_idToteam_members team_members?       @relation("assignments_team_member_idToteam_members", fields: [team_member_id], references: [id])
+  time_slots                                            time_slots[]
+  team_members_proposals                                team_members[]      @relation("proposals")
+}
+
+model attachments {
+  id                                                     String                @id @db.Uuid
+  content_type                                           String?
+  key                                                    String                @unique
+  email_id                                               String?               @db.Uuid
+  candidate_id                                           String?               @unique @db.Uuid
+  client_id                                              String?               @unique @db.Uuid
+  created_at                                             DateTime              @default(now())
+  job_application_id                                     String?               @unique @db.Uuid
+  path                                                   String
+  source                                                 String
+  tag_id                                                 String?               @unique @db.Uuid
+  team_member_id                                         String?               @unique @db.Uuid
+  updated_at                                             DateTime
+  user_id                                                String?               @unique @db.Uuid
+  ext                                                    String?
+  url                                                    String?
+  integration_id                                         String?               @unique @db.Uuid
+  contact_id                                             String?               @unique @db.Uuid
+  attachment_type                                        String?
+  employee_id                                            String?               @db.Uuid
+  name                                                   String?
+  signature_request_id                                   String?               @unique @db.Uuid
+  created_by_id                                          String?               @db.Uuid
+  esignature_template_id                                 String?               @unique @db.Uuid
+  signer_candidate_id                                    String?               @db.Uuid
+  email_template_id                                      String?               @db.Uuid
+  candidates_attachments_candidate_idTocandidates        candidates?           @relation("attachments_candidate_idTocandidates", fields: [candidate_id], references: [id])
+  clients                                                clients?              @relation(fields: [client_id], references: [id], onDelete: Cascade)
+  contacts                                               contacts?             @relation(fields: [contact_id], references: [id])
+  users_attachments_created_by_idTousers                 users?                @relation("attachments_created_by_idTousers", fields: [created_by_id], references: [id])
+  emails                                                 emails?               @relation(fields: [email_id], references: [id])
+  email_templates                                        email_templates?      @relation(fields: [email_template_id], references: [id])
+  employees                                              employees?            @relation(fields: [employee_id], references: [id])
+  esignature_templates                                   esignature_templates? @relation(fields: [esignature_template_id], references: [id])
+  integrations                                           integrations?         @relation(fields: [integration_id], references: [id])
+  job_applications                                       job_applications?     @relation(fields: [job_application_id], references: [id])
+  signature_requests                                     signature_requests?   @relation(fields: [signature_request_id], references: [id])
+  candidates_attachments_signer_candidate_idTocandidates candidates?           @relation("attachments_signer_candidate_idTocandidates", fields: [signer_candidate_id], references: [id])
+  tags                                                   tags?                 @relation(fields: [tag_id], references: [id])
+  team_members                                           team_members?         @relation(fields: [team_member_id], references: [id])
+  users_attachments_user_idTousers                       users?                @relation("attachments_user_idTousers", fields: [user_id], references: [id])
+}
+
+model attempt_reviews {
+  id          String   @id @db.Uuid
+  title       String
+  weight      Int
+  grade       Float
+  notes       String?
+  user_id     String   @db.Uuid
+  extra_point Boolean  @default(false)
+  created_at  DateTime @default(now())
+  updated_at  DateTime
+  attempt_id  String   @db.Uuid
+  attempts    attempts @relation(fields: [attempt_id], references: [id])
+  users       users    @relation(fields: [user_id], references: [id])
+}
+
+model attempts {
+  job_application_id String            @db.Uuid
+  challenge_id       String            @db.Uuid
+  due_date           DateTime
+  enabled            Boolean           @default(true)
+  created_at         DateTime          @default(now())
+  updated_at         DateTime
+  repo_url           String?
+  status             String            @default("In Progress")
+  cloud_task_name    String?
+  id                 String            @id @db.Uuid
+  score              Float?
+  attempt_reviews    attempt_reviews[]
+  challenges         challenges        @relation(fields: [challenge_id], references: [id])
+  job_applications   job_applications  @relation(fields: [job_application_id], references: [id])
+
+  @@unique([job_application_id, challenge_id])
+}
+
+model audit_trails {
+  id            String   @id @db.Uuid
+  action        String
+  resource      String?
+  output        Json?
+  input         Json?
+  headers       Json?
+  type          String   @default("INFO")
+  user_metadata Json?
+  ip_address    String
+  user_agent    String
+  user_id       String?  @db.Uuid
+  created_at    DateTime @default(now())
+}
+
+model bank_accounts {
+  id             String     @id @db.Uuid
+  name           String
+  type           String?
+  routing_number String?
+  number         String
+  percentage     Int?
+  created_at     DateTime   @default(now())
+  updated_at     DateTime?
+  employee_id    String?    @db.Uuid
+  amount         BigInt?
+  currency_code  String?
+  employees      employees? @relation(fields: [employee_id], references: [id])
+}
+
+model candidates {
+  id                                                      String             @id @db.Uuid
+  email                                                   String
+  avatar_key                                              String?
+  confirmed_at                                            DateTime?
+  created_at                                              DateTime           @default(now())
+  updated_at                                              DateTime
+  name                                                    String
+  github_username                                         String?
+  portfolio_link                                          String?
+  status                                                  String             @default("New")
+  linkedin_url                                            String?
+  phone                                                   String?
+  organization_id                                         String             @db.Uuid
+  deleted                                                 Boolean            @default(false)
+  city                                                    String?
+  country                                                 String?
+  attachments_attachments_candidate_idTocandidates        attachments?       @relation("attachments_candidate_idTocandidates")
+  attachments_attachments_signer_candidate_idTocandidates attachments[]      @relation("attachments_signer_candidate_idTocandidates")
+  organizations                                           organizations      @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  emails                                                  emails[]
+  employees                                               employees?
+  job_applications                                        job_applications[]
+  job_offers                                              job_offers[]
+  signatures                                              signatures[]
+
+  @@unique([email, organization_id])
+}
+
+model challenges {
+  id                   String                 @id @db.Uuid
+  name                 String
+  document_url         String?
+  enabled              Boolean                @default(true)
+  created_at           DateTime               @default(now())
+  updated_at           DateTime
+  organization_id      String                 @db.Uuid
+  department_id        String?                @db.Uuid
+  level                Seniority?
+  deleted              Boolean                @default(false)
+  attempts             attempts[]
+  job_departments      job_departments?       @relation(fields: [department_id], references: [id])
+  organizations        organizations          @relation(fields: [organization_id], references: [id])
+  evaluation_criterias evaluation_criterias[]
+  tags                 tags[]                 @relation("ChallengeToTag")
+}
+
+model client_teams {
+  id               String          @id @db.Uuid
+  name             String
+  created_at       DateTime        @default(now())
+  updated_at       DateTime
+  client_id        String?         @db.Uuid
+  position         Float?
+  slack_channel_id String?         @unique @db.Uuid
+  assignments      assignments[]
+  clients          clients?        @relation(fields: [client_id], references: [id])
+  slack_channels   slack_channels? @relation(fields: [slack_channel_id], references: [id])
+}
+
+model clients {
+  id                                   String                      @id @db.Uuid
+  name                                 String
+  status                               String
+  organization_id                      String                      @db.Uuid
+  created_at                           DateTime                    @default(now())
+  updated_at                           DateTime?
+  enabled                              Boolean                     @default(true)
+  billable                             Boolean                     @default(false)
+  prospect_client                      Boolean                     @default(false)
+  deleted                              Boolean?                    @default(false)
+  notes                                String?
+  position                             Float?
+  hubspot_deal_id                      String?
+  slack_channel_id                     String?                     @unique @db.Uuid
+  total_open_req                       Int                         @default(0)
+  total_opportunities                  Int                         @default(0)
+  clockify_external_client_id          String?
+  clockify_external_default_project_id String?
+  account_owner_score_avg              Float?
+  team_score_avg                       Float?
+  account_owner_reports                account_owner_reports[]
+  account_owners_to_clients            account_owners_to_clients[]
+  assignments                          assignments[]
+  attachments                          attachments?
+  client_teams                         client_teams[]
+  organizations                        organizations               @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  slack_channels                       slack_channels?             @relation(fields: [slack_channel_id], references: [id])
+  contacts                             contacts[]
+  team_status_reports                  team_status_reports[]
+  time_entries                         time_entries[]
+}
+
+model clockify_group_references {
+  organization_id   String
+  client_id         String
+  clockify_group_id String
+  group_name        String
+  client_team_id    String?
+  assigned_users    String[] @default([])
+  managers          String[] @default([])
+
+  @@unique([client_id, organization_id, clockify_group_id])
+}
+
+model comments {
+  id                 String            @id @db.Uuid
+  commenter_id       String            @db.Uuid
+  comment            String
+  created_at         DateTime          @default(now())
+  job_application_id String?           @db.Uuid
+  private            Boolean           @default(false)
+  updated_at         DateTime?
+  deleted            Boolean           @default(false)
+  users              users             @relation(fields: [commenter_id], references: [id])
+  job_applications   job_applications? @relation(fields: [job_application_id], references: [id])
+  mentions           mentions[]
+}
+
+model compensation_histories {
+  id             String     @id @db.Uuid
+  effective_date DateTime
+  reason         String?
+  pay_schedule   String?
+  comment        String?
+  created_at     DateTime   @default(now())
+  updated_at     DateTime?
+  employee_id    String?    @db.Uuid
+  pay_type       String?
+  deleted        Boolean    @default(false)
+  deleted_at     DateTime?
+  rate           BigInt
+  currency_code  String?
+  overtime_rate  BigInt?
+  employees      employees? @relation(fields: [employee_id], references: [id])
+}
+
+model contacts {
+  id              String       @id @db.Uuid
+  name            String
+  email           String?
+  title           String?
+  country_code    String?
+  phone           String?
+  client_id       String?      @db.Uuid
+  deleted         Boolean      @default(false)
+  city            String?
+  country         String?
+  first_street    String?
+  relationship    String?
+  second_street   String?
+  secondary_phone String?
+  state           String?
+  type            String?
+  work_phone      String?
+  zip_code        String?
+  employee_id     String?      @db.Uuid
+  is_primary      Boolean?
+  attachments     attachments?
+  clients         clients?     @relation(fields: [client_id], references: [id])
+  employees       employees?   @relation(fields: [employee_id], references: [id])
+}
+
+model custom_fields {
+  id                      String               @id @db.Uuid
+  name                    String
+  type                    String
+  template_id             String               @db.Uuid
+  populatable_field_id    String?              @db.Uuid
+  created_at              DateTime             @default(now())
+  updated_at              DateTime?
+  estimated_length        Int?                 @default(0)
+  mark_as_manually_filled Boolean              @default(false)
+  required                Boolean?
+  template_role_id        String?              @db.Uuid
+  populatable_fields      populatable_fields?  @relation(fields: [populatable_field_id], references: [id])
+  esignature_templates    esignature_templates @relation(fields: [template_id], references: [id])
+  template_roles          template_roles?      @relation(fields: [template_role_id], references: [id])
+
+  @@unique([template_id, name])
+}
+
+model education_histories {
+  id          String    @id @db.Uuid
+  degree      String?
+  institution String
+  start_date  DateTime  @db.Date
+  end_date    DateTime? @db.Date
+  major       String?
+  gpa         Float?
+  employee_id String    @db.Uuid
+  employees   employees @relation(fields: [employee_id], references: [id])
+}
+
+model email_template_tokens {
+  id                    String   @id @db.Uuid
+  token                 String   @unique
+  title                 String?
+  kind                  String
+  module_id             String   @db.Uuid
+  available_constraints String[]
+  category              String
+  default_options       Json?
+  is_populated          Boolean
+  modules               modules  @relation(fields: [module_id], references: [id])
+}
+
+model email_templates {
+  id              String        @id @db.Uuid
+  template_name   String
+  default_subject String
+  body            String
+  created_by_id   String?       @db.Uuid
+  organization_id String        @db.Uuid
+  deleted_at      DateTime?
+  created_at      DateTime      @default(now())
+  updated_at      DateTime?
+  attachments     attachments[]
+  users           users?        @relation(fields: [created_by_id], references: [id])
+  organizations   organizations @relation(fields: [organization_id], references: [id])
+}
+
+model emails {
+  id           String        @id @db.Uuid
+  subject      String
+  body         String
+  candidate_id String?       @db.Uuid
+  sender_id    String        @db.Uuid
+  created_at   DateTime      @default(now())
+  reply_to     String?
+  type         String
+  attachments  attachments[]
+  candidates   candidates?   @relation(fields: [candidate_id], references: [id])
+  users        users         @relation(fields: [sender_id], references: [id])
+}
+
+model employee_to_languages {
+  id          String    @id @db.Uuid
+  level       String?
+  employee_id String    @db.Uuid
+  language_id String    @db.Uuid
+  comments    String?
+  employees   employees @relation(fields: [employee_id], references: [id])
+  languages   languages @relation(fields: [language_id], references: [id])
+
+  @@unique([employee_id, language_id])
+}
+
+model employee_trainings {
+  id                   String    @id @db.Uuid
+  title                String
+  issue_date           DateTime
+  expiration_date      DateTime?
+  certification_number String?
+  notes                String?
+  employee_id          String    @db.Uuid
+  type                 String
+  provider             String
+  score                String?
+  employees            employees @relation(fields: [employee_id], references: [id])
+}
+
+model employees {
+  id                                             String                            @id @db.Uuid
+  identity_number                                String?                           @unique
+  tax_number                                     String?                           @unique
+  ssn                                            String?                           @unique
+  full_name                                      String
+  email                                          String?
+  preferred_first_name                           String?
+  preferred_last_name                            String?
+  birth_date                                     DateTime?                         @db.Date
+  gender                                         String?
+  marital_status                                 String?
+  lat                                            Float?
+  lng                                            Float?
+  nationality                                    String?
+  shirt_size                                     String?
+  english_level                                  String?
+  social_links                                   Json?
+  allergies                                      String?
+  candidate_id                                   String?                           @unique @db.Uuid
+  identifier                                     Int
+  user_id                                        String?                           @unique @db.Uuid
+  organization_id                                String                            @db.Uuid
+  termination_date                               DateTime?                         @db.Date
+  termination_reason                             String?
+  division                                       String?
+  is_allowed_to_login                            Boolean                           @default(true)
+  is_manually_created                            Boolean                           @default(false)
+  preferred_name                                 String?
+  middle_name                                    String?
+  assets                                         assets[]
+  attachments                                    attachments[]
+  bank_accounts                                  bank_accounts[]
+  compensation_histories                         compensation_histories[]
+  contacts                                       contacts[]
+  education_histories                            education_histories[]
+  employee_to_languages                          employee_to_languages[]
+  employee_trainings                             employee_trainings[]
+  candidates                                     candidates?                       @relation(fields: [candidate_id], references: [id])
+  organizations                                  organizations                     @relation(fields: [organization_id], references: [id])
+  users                                          users?                            @relation(fields: [user_id], references: [id])
+  hiring_package_employee_answers                hiring_package_employee_answers[]
+  hiring_package_to_employees                    hiring_package_to_employees?
+  job_details_job_details_employee_idToemployees job_details[]                     @relation("job_details_employee_idToemployees")
+  job_details_job_details_manager_idToemployees  job_details[]                     @relation("job_details_manager_idToemployees")
+  performance_reviews                            performance_reviews[]
+  signatures                                     signatures[]
+  travel_documents                               travel_documents[]
+  team_members                                   team_members[]                    @relation("EmployeeToTeamMember")
+}
+
+model esignature_templates {
+  id                 String               @id @db.Uuid
+  ref_id             String               @unique
+  organization_id    String               @db.Uuid
+  name               String
+  created_at         DateTime             @default(now())
+  updated_at         DateTime?
+  deleted            Boolean              @default(false)
+  status             String               @default("SetupPending")
+  tags               String[]
+  message            String?              @db.VarChar(5000)
+  subject            String?              @db.VarChar(255)
+  attachments        attachments?
+  custom_fields      custom_fields[]
+  organizations      organizations        @relation(fields: [organization_id], references: [id])
+  signature_requests signature_requests[]
+  template_roles     template_roles[]
+  users              users[]              @relation("EsignatureTemplateToUser")
+}
+
+model evaluated_skill_snapshots {
+  id                       String                 @id @db.Uuid
+  score                    Int?
+  skill_group_name         String
+  skill_name               String
+  skill_id                 String                 @db.Uuid
+  skill_group_id           String                 @db.Uuid
+  score_card_evaluation_id String                 @db.Uuid
+  score_card_evaluations   score_card_evaluations @relation(fields: [score_card_evaluation_id], references: [id])
+}
+
+model evaluation_criterias {
+  id           String     @id @db.Uuid
+  title        String
+  weight       Int
+  extra_point  Boolean    @default(false)
+  challenge_id String     @db.Uuid
+  created_at   DateTime   @default(now())
+  updated_at   DateTime?
+  challenges   challenges @relation(fields: [challenge_id], references: [id])
+}
+
+model hiring_package_employee_answers {
+  id                         String                   @id @db.Uuid
+  hiring_package_question_id String                   @db.Uuid
+  employee_id                String                   @db.Uuid
+  answer                     String?
+  created_at                 DateTime                 @default(now())
+  updated_at                 DateTime
+  employees                  employees                @relation(fields: [employee_id], references: [id])
+  hiring_package_questions   hiring_package_questions @relation(fields: [hiring_package_question_id], references: [id])
+}
+
+model hiring_package_questions {
+  id                              String                            @id @db.Uuid
+  question                        String
+  version_number                  Int
+  version_date                    DateTime
+  deleted                         Boolean                           @default(false)
+  required                        Boolean                           @default(false)
+  hiring_package_id               String                            @db.Uuid
+  created_at                      DateTime                          @default(now())
+  updated_at                      DateTime
+  hiring_package_employee_answers hiring_package_employee_answers[]
+  hiring_packages                 hiring_packages                   @relation(fields: [hiring_package_id], references: [id])
+}
+
+model hiring_package_to_employees {
+  hiring_package_id String          @db.Uuid
+  employee_id       String          @unique @db.Uuid
+  status            String          @default("SENT")
+  start_time        DateTime?       @db.Time(3)
+  employees         employees       @relation(fields: [employee_id], references: [id])
+  hiring_packages   hiring_packages @relation(fields: [hiring_package_id], references: [id])
+
+  @@unique([hiring_package_id, employee_id])
+}
+
+model hiring_packages {
+  id                          String                        @id @db.Uuid
+  name                        String
+  organization_id             String                        @db.Uuid
+  deleted                     Boolean                       @default(false)
+  created_at                  DateTime                      @default(now())
+  updated_at                  DateTime
+  hiring_package_questions    hiring_package_questions[]
+  hiring_package_to_employees hiring_package_to_employees[]
+  organizations               organizations                 @relation(fields: [organization_id], references: [id])
+}
+
+model hiring_steps {
+  id               String             @id @db.Uuid
+  name             String
+  has_interview    Boolean
+  stage_id         String             @db.Uuid
+  stages           stages             @relation(fields: [stage_id], references: [id])
+  job_applications job_applications[]
+}
+
+model hubspot_deals {
+  id            String    @id @db.Uuid
+  object_id     String
+  deal_name     String
+  deal_stage    String
+  pipeline      String
+  amount        Float?
+  owner_id      String?
+  deal_type     String?
+  deal_priority String?
+  close_date    DateTime?
+  created_at    DateTime  @default(now())
+  updated_at    DateTime
+  status        String    @default("NEW")
+  portal_id     String?
+  owner_email   String?
+}
+
+model integrations {
+  id                            String                          @id @db.Uuid
+  name                          String
+  code                          String                          @unique
+  description                   String?
+  enable                        Boolean                         @default(true)
+  created_at                    DateTime                        @default(now())
+  updated_at                    DateTime
+  attachments                   attachments?
+  organizations_to_integrations organizations_to_integrations[]
+  settings                      settings[]
+}
+
+model interviews {
+  id                 String           @id @db.Uuid
+  google_event_id    String?
+  date               DateTime?
+  interview_purpose  String
+  duration           Int
+  meeting_url        String?
+  status             String
+  created_at         DateTime         @default(now())
+  updated_at         DateTime
+  job_application_id String           @db.Uuid
+  title              String
+  interviewer_id     String?          @db.Uuid
+  task_id            String?
+  users              users?           @relation(fields: [interviewer_id], references: [id])
+  job_applications   job_applications @relation(fields: [job_application_id], references: [id])
+}
+
+model invites {
+  id              String        @id @db.Uuid
+  token           String        @unique
+  expire_at       DateTime      @default(now())
+  email           String
+  user_id         String        @db.Uuid
+  organization_id String        @db.Uuid
+  created_at      DateTime      @default(now())
+  updated_at      DateTime?
+  enabled         Boolean       @default(true)
+  organizations   organizations @relation(fields: [organization_id], references: [id])
+  users           users         @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model job_applications {
+  id                     String                   @id @db.Uuid
+  resume_key             String?
+  additional_attributes  Json?
+  job_listing_questions  Json?
+  level                  Seniority?
+  claimer_id             String?                  @db.Uuid
+  candidate_id           String?                  @db.Uuid
+  job_listing_id         String?                  @db.Uuid
+  created_at             DateTime                 @default(now())
+  enabled                Boolean                  @default(true)
+  updated_at             DateTime
+  years_experience       String?
+  organization_id        String                   @db.Uuid
+  deleted                Boolean                  @default(false)
+  referred_by            String?
+  rating                 Int?                     @default(0)
+  contact_date           DateTime?
+  contacted_by           String?
+  current_stage_id       String?                  @db.Uuid
+  current_step_id        String?                  @db.Uuid
+  activities             activities[]
+  attachments            attachments?
+  attempts               attempts[]
+  comments               comments[]
+  interviews             interviews[]
+  candidates             candidates?              @relation(fields: [candidate_id], references: [id])
+  users                  users?                   @relation(fields: [claimer_id], references: [id])
+  stages                 stages?                  @relation(fields: [current_stage_id], references: [id])
+  hiring_steps           hiring_steps?            @relation(fields: [current_step_id], references: [id])
+  job_listings           job_listings?            @relation(fields: [job_listing_id], references: [id])
+  organizations          organizations            @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  score_card_evaluations score_card_evaluations[]
+  slack_messages         slack_messages[]
+}
+
+model job_departments {
+  id              String         @id @db.Uuid
+  name            String
+  organization_id String         @db.Uuid
+  created_at      DateTime       @default(now())
+  updated_at      DateTime
+  challenges      challenges[]
+  organizations   organizations  @relation(fields: [organization_id], references: [id])
+  job_details     job_details[]
+  job_listings    job_listings[]
+  score_cards     score_cards[]
+
+  @@unique([name, organization_id])
+}
+
+model job_details {
+  id                                           String          @id @db.Uuid
+  name                                         String
+  contract_type                                String
+  hire_date                                    DateTime        @db.Date
+  expiration_date                              DateTime?       @db.Date
+  division                                     String
+  created_at                                   DateTime        @default(now())
+  updated_at                                   DateTime?
+  manager_id                                   String?         @db.Uuid
+  employee_id                                  String          @db.Uuid
+  job_department_id                            String          @db.Uuid
+  location                                     String?
+  deleted                                      Boolean         @default(false)
+  deleted_at                                   DateTime?
+  comments                                     String?
+  contract_type_date                           DateTime?       @db.Date
+  elegible_for_rehire                          String?
+  original_hire_date                           DateTime?       @db.Date
+  regret_status                                String?
+  renewal_date                                 DateTime?       @db.Date
+  termination_reason                           String?
+  termination_type                             String?
+  employees_job_details_employee_idToemployees employees       @relation("job_details_employee_idToemployees", fields: [employee_id], references: [id])
+  job_departments                              job_departments @relation(fields: [job_department_id], references: [id])
+  employees_job_details_manager_idToemployees  employees?      @relation("job_details_manager_idToemployees", fields: [manager_id], references: [id])
+}
+
+model job_listings {
+  id                              String             @id @db.Uuid
+  created_at                      DateTime           @default(now())
+  updated_at                      DateTime
+  description                     String?
+  levels                          Json?
+  listing_type                    String?
+  locations                       Json?
+  published_at                    DateTime?
+  status                          String?
+  job_department_id               String?            @db.Uuid
+  is_remote                       Boolean            @default(false)
+  updates_slack_channel_id        String?
+  recommend_hire_slack_channel_id String?
+  organization_id                 String             @db.Uuid
+  deleted                         Boolean            @default(false)
+  title                           String?
+  score_card_id                   String?            @db.Uuid
+  countries                       String[]           @default([])
+  notes                           String?
+  open_positions                  Int?
+  priority                        String?
+  candidates_count                Int?               @default(0)
+  job_applications                job_applications[]
+  job_departments                 job_departments?   @relation(fields: [job_department_id], references: [id])
+  organizations                   organizations      @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  score_cards                     score_cards?       @relation(fields: [score_card_id], references: [id])
+  tags                            tags[]             @relation("JobListingToTag")
+}
+
+model job_offers {
+  id           String     @id @db.Uuid
+  rate         Float
+  start_date   DateTime
+  status       String     @default("pending")
+  position     String
+  period       String
+  created_at   DateTime   @default(now())
+  candidate_id String     @db.Uuid
+  candidates   candidates @relation(fields: [candidate_id], references: [id])
+}
+
+model languages {
+  id                    String                  @id @db.Uuid
+  name                  String                  @unique
+  employee_to_languages employee_to_languages[]
+}
+
+model mentions {
+  id             String          @id @db.Uuid
+  created_at     DateTime        @default(now())
+  comment_id     String          @db.Uuid
+  mentioned_id   String          @db.Uuid
+  comments       comments        @relation(fields: [comment_id], references: [id])
+  users          users           @relation(fields: [mentioned_id], references: [id])
+  slack_messages slack_messages?
+}
+
+model modules {
+  id                    String                  @id @db.Uuid
+  name                  String
+  code                  String                  @unique
+  created_at            DateTime                @default(now())
+  updated_at            DateTime
+  email_template_tokens email_template_tokens[]
+  sub_modules           sub_modules[]
+  organizations         organizations[]         @relation("ModuleToOrganization")
+}
+
+model organizations {
+  id                                         String                          @id @db.Uuid
+  name                                       String                          @unique
+  domain                                     String                          @unique
+  description                                String?
+  logo_url                                   String?
+  user_owner_id                              String?                         @unique @db.Uuid
+  slack_team_id                              String?                         @unique @db.Uuid
+  created_at                                 DateTime                        @default(now())
+  updated_at                                 DateTime?
+  enabled                                    Boolean                         @default(true)
+  allowed_access                             Boolean                         @default(false)
+  portal_id                                  String?                         @unique
+  asset_categories                           asset_categories[]
+  candidates                                 candidates[]
+  challenges                                 challenges[]
+  clients                                    clients[]
+  email_templates                            email_templates[]
+  employees                                  employees[]
+  esignature_templates                       esignature_templates[]
+  hiring_packages                            hiring_packages[]
+  invites                                    invites[]
+  job_applications                           job_applications[]
+  job_departments                            job_departments[]
+  job_listings                               job_listings[]
+  slack_teams                                slack_teams?                    @relation(fields: [slack_team_id], references: [id], onDelete: Cascade)
+  users_organizations_user_owner_idTousers   users?                          @relation("organizations_user_owner_idTousers", fields: [user_owner_id], references: [id], onDelete: Cascade)
+  organizations_to_integrations              organizations_to_integrations[]
+  organizations_to_settings                  organizations_to_settings[]
+  performance_review_questions               performance_review_questions[]
+  score_cards                                score_cards[]
+  signature_requests                         signature_requests[]
+  skills                                     skills[]
+  slack_channels                             slack_channels[]
+  slack_messages                             slack_messages[]
+  slack_users                                slack_users[]
+  tags                                       tags[]
+  team_members                               team_members[]
+  time_off_policies                          time_off_policies[]
+  users_users_organization_idToorganizations users[]                         @relation("users_organization_idToorganizations")
+  webhooks                                   webhooks[]
+  modules                                    modules[]                       @relation("ModuleToOrganization")
+}
+
+model organizations_to_integrations {
+  organization_id      String        @db.Uuid
+  integration_id       String        @db.Uuid
+  access_token         String?
+  installed            Boolean       @default(false)
+  created_at           DateTime      @default(now())
+  expires_in           Float?
+  refresh_token        String?
+  updated_at           DateTime
+  installation_id      Int?
+  bot_user_id          String?
+  api_key              String?
+  installation_user_id String?       @db.Uuid
+  webhooks             Json?
+  workspace_id         String?
+  users                users?        @relation(fields: [installation_user_id], references: [id])
+  integrations         integrations  @relation(fields: [integration_id], references: [id])
+  organizations        organizations @relation(fields: [organization_id], references: [id])
+
+  @@unique([organization_id, integration_id])
+}
+
+model organizations_to_settings {
+  organization_id String          @db.Uuid
+  setting_id      String          @db.Uuid
+  configuration   Json?
+  is_active       Boolean         @default(false)
+  created_at      DateTime        @default(now())
+  channel_id      String?         @db.Uuid
+  slack_channels  slack_channels? @relation(fields: [channel_id], references: [id])
+  organizations   organizations   @relation(fields: [organization_id], references: [id])
+  settings        settings        @relation(fields: [setting_id], references: [id])
+
+  @@unique([organization_id, setting_id])
+}
+
+model performance_review_evaluations {
+  id                             String                       @id @db.Uuid
+  qualification                  String?
+  comment                        String?
+  created_at                     DateTime                     @default(now())
+  updated_at                     DateTime?
+  performance_review_id          String                       @db.Uuid
+  performance_review_question_id String                       @db.Uuid
+  performance_reviews            performance_reviews          @relation(fields: [performance_review_id], references: [id])
+  performance_review_questions   performance_review_questions @relation(fields: [performance_review_question_id], references: [id])
+}
+
+model performance_review_questions {
+  id                             String                           @id @db.Uuid
+  title                          String                           @unique
+  description                    String
+  has_qualification              Boolean
+  comment_label                  String
+  created_at                     DateTime                         @default(now())
+  updated_at                     DateTime?
+  organization_id                String                           @db.Uuid
+  performance_review_evaluations performance_review_evaluations[]
+  organizations                  organizations                    @relation(fields: [organization_id], references: [id])
+}
+
+model performance_reviews {
+  id                                                  String                           @id @db.Uuid
+  review_date                                         DateTime
+  status                                              String
+  created_at                                          DateTime                         @default(now())
+  updated_at                                          DateTime?
+  employee_id                                         String                           @db.Uuid
+  first_reviewer_id                                   String                           @db.Uuid
+  second_reviewer_id                                  String?                          @db.Uuid
+  performance_review_evaluations                      performance_review_evaluations[]
+  employees                                           employees                        @relation(fields: [employee_id], references: [id])
+  users_performance_reviews_first_reviewer_idTousers  users                            @relation("performance_reviews_first_reviewer_idTousers", fields: [first_reviewer_id], references: [id])
+  users_performance_reviews_second_reviewer_idTousers users?                           @relation("performance_reviews_second_reviewer_idTousers", fields: [second_reviewer_id], references: [id])
+}
+
+model permissions {
+  id         String   @id @db.Uuid
+  codename   String
+  name       String
+  created_at DateTime @default(now())
+  updated_at DateTime
+  conditions Json?
+  key        String   @unique
+  roles      roles[]  @relation("PermissionToRole")
+  users      users[]  @relation("PermissionToUser")
+}
+
+model populatable_fields {
+  id               String          @id @db.Uuid
+  name             String
+  label            String
+  created_at       DateTime        @default(now())
+  updated_at       DateTime?
+  signer_entity_id String          @db.Uuid
+  custom_fields    custom_fields[]
+  signer_entities  signer_entities @relation(fields: [signer_entity_id], references: [id])
+
+  @@unique([name, signer_entity_id])
+}
+
+model roles {
+  id          String        @id @db.Uuid
+  name        String        @unique
+  created_at  DateTime      @default(now())
+  updated_at  DateTime
+  icon        String?
+  permissions permissions[] @relation("PermissionToRole")
+  sub_modules sub_modules[] @relation("RoleToSubModule")
+  users       users[]       @relation("RoleToUser")
+}
+
+model score_card_evaluations {
+  id                        String                      @id @db.Uuid
+  score                     Int
+  notes                     String?
+  deleted_at                DateTime?
+  score_card_id             String                      @db.Uuid
+  user_id                   String                      @db.Uuid
+  job_application_id        String                      @db.Uuid
+  created_at                DateTime                    @default(now())
+  updated_at                DateTime
+  is_score_card_removed     Boolean                     @default(false)
+  evaluated_skill_snapshots evaluated_skill_snapshots[]
+  job_applications          job_applications            @relation(fields: [job_application_id], references: [id])
+  score_cards               score_cards                 @relation(fields: [score_card_id], references: [id])
+  users                     users                       @relation(fields: [user_id], references: [id])
+}
+
+model score_cards {
+  id                     String                   @id @db.Uuid
+  name                   String
+  created_at             DateTime                 @default(now())
+  updated_at             DateTime
+  deleted_at             DateTime?
+  organization_id        String                   @db.Uuid
+  job_department_id      String?                  @db.Uuid
+  job_listings           job_listings[]
+  score_card_evaluations score_card_evaluations[]
+  job_departments        job_departments?         @relation(fields: [job_department_id], references: [id])
+  organizations          organizations            @relation(fields: [organization_id], references: [id])
+  skill_groups           skill_groups[]
+}
+
+model settings {
+  id                        String                      @id @db.Uuid
+  code                      String                      @unique
+  description               String?
+  name                      String
+  integration_id            String?                     @db.Uuid
+  organizations_to_settings organizations_to_settings[]
+  integrations              integrations?               @relation(fields: [integration_id], references: [id])
+}
+
+model signature_requests {
+  id                   String               @id @db.Uuid
+  ref_id               String               @unique
+  organization_id      String               @db.Uuid
+  status               String               @default("sent")
+  created_at           DateTime             @default(now())
+  updated_at           DateTime?
+  template_id          String               @db.Uuid
+  canceled_at          DateTime?
+  message              String?              @db.VarChar(5000)
+  sent_via             String
+  subject              String?              @db.VarChar(255)
+  title                String               @db.VarChar(255)
+  user_id              String?              @db.Uuid
+  attachments          attachments?
+  organizations        organizations        @relation(fields: [organization_id], references: [id])
+  esignature_templates esignature_templates @relation(fields: [template_id], references: [id])
+  users                users?               @relation(fields: [user_id], references: [id])
+  signatures           signatures[]
+}
+
+model signatures {
+  id                   String             @id @db.Uuid
+  ref_id               String             @unique
+  signature_request_id String             @db.Uuid
+  status               String             @default("awaiting_signature")
+  created_at           DateTime           @default(now())
+  updated_at           DateTime?
+  order                Int?
+  signer_email         String
+  signer_name          String
+  signer_role          String
+  signed_at            DateTime?
+  employee_id          String?            @db.Uuid
+  candidate_id         String?            @db.Uuid
+  canceled_at          DateTime?
+  last_viewed_at       DateTime?
+  last_reminded_at     DateTime?
+  candidates           candidates?        @relation(fields: [candidate_id], references: [id])
+  employees            employees?         @relation(fields: [employee_id], references: [id])
+  signature_requests   signature_requests @relation(fields: [signature_request_id], references: [id])
+}
+
+model signer_entities {
+  id                 String               @id @db.Uuid
+  name               String               @unique
+  label              String
+  created_at         DateTime             @default(now())
+  updated_at         DateTime?
+  populatable_fields populatable_fields[]
+  template_roles     template_roles[]
+}
+
+model skill_groups {
+  id                     String                   @id @db.Uuid
+  name                   String
+  created_at             DateTime                 @default(now())
+  updated_at             DateTime
+  score_card_id          String                   @db.Uuid
+  score_cards            score_cards              @relation(fields: [score_card_id], references: [id])
+  skills_to_skill_groups skills_to_skill_groups[]
+
+  @@unique([name, score_card_id])
+}
+
+model skills {
+  id                     String                   @id @db.Uuid
+  name                   String
+  created_at             DateTime                 @default(now())
+  updated_at             DateTime
+  deleted_at             DateTime?
+  organization_id        String                   @db.Uuid
+  organizations          organizations            @relation(fields: [organization_id], references: [id])
+  skills_to_skill_groups skills_to_skill_groups[]
+}
+
+model skills_to_skill_groups {
+  skill_id       String       @db.Uuid
+  skill_group_id String       @db.Uuid
+  skill_groups   skill_groups @relation(fields: [skill_group_id], references: [id])
+  skills         skills       @relation(fields: [skill_id], references: [id])
+
+  @@unique([skill_id, skill_group_id])
+}
+
+model slack_channels {
+  id                        String                      @id @db.Uuid
+  slack_id                  String                      @unique
+  created_at                DateTime
+  name                      String
+  name_normalized           String
+  is_private                Boolean
+  channel_url               String
+  organization_id           String                      @db.Uuid
+  client_teams              client_teams?
+  clients                   clients?
+  organizations_to_settings organizations_to_settings[]
+  organizations             organizations               @relation(fields: [organization_id], references: [id])
+}
+
+model slack_messages {
+  id                 String            @id @db.Uuid
+  channel_id         String
+  sent_at            String
+  blocks             Json
+  action_type        String
+  job_application_id String?           @db.Uuid
+  status             String
+  created_at         DateTime          @default(now())
+  updated_at         DateTime
+  mention_id         String?           @unique @db.Uuid
+  organization_id    String?           @db.Uuid
+  job_applications   job_applications? @relation(fields: [job_application_id], references: [id])
+  mentions           mentions?         @relation(fields: [mention_id], references: [id])
+  organizations      organizations?    @relation(fields: [organization_id], references: [id])
+}
+
+model slack_teams {
+  id               String         @id @db.Uuid
+  team_id          String         @unique
+  team_name        String         @unique
+  team_domain      String         @unique
+  bot_access_token String?        @unique
+  team_image_url   String
+  created_at       DateTime       @default(now())
+  updated_at       DateTime?
+  enabled          Boolean        @default(true)
+  organizations    organizations?
+}
+
+model slack_users {
+  id              String            @id @db.Uuid
+  first_name      String?
+  last_name       String?
+  email           String
+  avatar_url      String?
+  slack_team_id   String
+  slack_id        String
+  status          SlackMemberStatus
+  created_at      DateTime          @default(now())
+  updated_at      DateTime?
+  country         String?
+  city            String?
+  seniority       Seniority?
+  english_level   EnglishLevel?     @default(BASIC)
+  techStack       String?
+  imported_at     DateTime?
+  organization_id String?           @db.Uuid
+  organizations   organizations?    @relation(fields: [organization_id], references: [id])
+}
+
+model stage_actions {
+  id            String @id
+  model_content String
+  stage_id      String @db.Uuid
+  stages        stages @relation(fields: [stage_id], references: [id])
+}
+
+model stages {
+  id               String             @id @db.Uuid
+  name             String
+  color            String?
+  hiring_steps     hiring_steps[]
+  job_applications job_applications[]
+  stage_actions    stage_actions[]
+}
+
+model sub_modules {
+  id         String   @id @db.Uuid
+  name       String   @unique
+  created_at DateTime @default(now())
+  updated_at DateTime
+  module_id  String   @db.Uuid
+  modules    modules  @relation(fields: [module_id], references: [id])
+  roles      roles[]  @relation("RoleToSubModule")
+}
+
+model tags {
+  id                   String                 @id @db.Uuid
+  name                 String
+  color                String?
+  icon                 String?                @unique
+  category             Category
+  created_at           DateTime               @default(now())
+  updated_at           DateTime?
+  enabled              Boolean                @default(true)
+  organization_id      String?                @db.Uuid
+  user_id              String?                @db.Uuid
+  shape                String?
+  initials             String?                @db.VarChar(255)
+  AssignmentsToTags    AssignmentsToTags[]
+  attachments          attachments?
+  organizations        organizations?         @relation(fields: [organization_id], references: [id])
+  users                users?                 @relation(fields: [user_id], references: [id])
+  tags_to_team_members tags_to_team_members[]
+  challenges           challenges[]           @relation("ChallengeToTag")
+  job_listings         job_listings[]         @relation("JobListingToTag")
+
+  @@index([name, organization_id])
+}
+
+model tags_to_team_members {
+  id             String       @id @db.Uuid
+  tag_id         String       @db.Uuid
+  team_member_id String       @db.Uuid
+  seniority      String?
+  created_at     DateTime     @default(now())
+  updated_at     DateTime?
+  tags           tags         @relation(fields: [tag_id], references: [id])
+  team_members   team_members @relation(fields: [team_member_id], references: [id])
+}
+
+model team_members {
+  id                                                   String                       @id @db.Uuid
+  name                                                 String
+  email                                                String
+  weekly_available_hours                               Int                          @default(40)
+  seniority_level                                      Seniority?
+  english_level                                        EnglishLevel?                @default(BASIC)
+  slack_id                                             String?                      @unique
+  organization_id                                      String                       @db.Uuid
+  created_at                                           DateTime                     @default(now())
+  updated_at                                           DateTime?
+  enabled                                              Boolean                      @default(true)
+  deleted                                              Boolean                      @default(false)
+  country                                              String?
+  city                                                 String?
+  active                                               Boolean                      @default(true)
+  clockify_external_id                                 String?
+  account_owners_to_clients                            account_owners_to_clients[]
+  assignments_assignments_team_member_idToteam_members assignments[]                @relation("assignments_team_member_idToteam_members")
+  attachments                                          attachments?
+  tags_to_team_members                                 tags_to_team_members[]
+  organizations                                        organizations                @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  team_status_report_details                           team_status_report_details[]
+  time_entries                                         time_entries[]
+  time_off_requests                                    time_off_requests[]
+  employees                                            employees[]                  @relation("EmployeeToTeamMember")
+  assignments_proposals                                assignments[]                @relation("proposals")
+
+  @@index([name])
+}
+
+model team_status_report_details {
+  id                    String              @id @db.Uuid
+  health_score          Float?
+  notes                 String?
+  created_at            DateTime            @default(now())
+  updated_at            DateTime?
+  deleted_at            DateTime?
+  team_status_report_id String              @db.Uuid
+  team_member_id        String              @db.Uuid
+  client_team_id        String?
+  client_team_name      String
+  team_members          team_members        @relation(fields: [team_member_id], references: [id])
+  team_status_reports   team_status_reports @relation(fields: [team_status_report_id], references: [id])
+}
+
+model team_status_reports {
+  id                                           String                       @id @db.Uuid
+  health_score                                 Float?
+  created_at                                   DateTime                     @default(now())
+  updated_at                                   DateTime?
+  deleted_at                                   DateTime?
+  client_id                                    String                       @db.Uuid
+  author_id                                    String                       @db.Uuid
+  reviewer_id                                  String?                      @db.Uuid
+  general_notes                                String?
+  status                                       String                       @default("IN DRAFT") @db.VarChar(15)
+  team_status_report_details                   team_status_report_details[]
+  users_team_status_reports_author_idTousers   users                        @relation("team_status_reports_author_idTousers", fields: [author_id], references: [id])
+  clients                                      clients                      @relation(fields: [client_id], references: [id])
+  users_team_status_reports_reviewer_idTousers users?                       @relation("team_status_reports_reviewer_idTousers", fields: [reviewer_id], references: [id])
+}
+
+model template_roles {
+  id                   String               @id @db.Uuid
+  name                 String
+  order                Int?
+  type                 String?
+  template_id          String               @db.Uuid
+  signer_entity_id     String?              @db.Uuid
+  custom_fields        custom_fields[]
+  signer_entities      signer_entities?     @relation(fields: [signer_entity_id], references: [id])
+  esignature_templates esignature_templates @relation(fields: [template_id], references: [id])
+
+  @@unique([name, template_id, type])
+}
+
+model time_entries {
+  id                  String        @id @db.Uuid
+  ref_id              String?       @unique
+  description         String?
+  is_billable         Boolean
+  tags                String[]      @default([])
+  start               DateTime
+  end                 DateTime?
+  formatted_duration  String?
+  duration            Float?
+  deleted_at          DateTime?
+  historical          Json?
+  created_at          DateTime      @default(now())
+  updated_at          DateTime?
+  clockify_user_id    String?
+  user_name           String?
+  team_member_id      String?       @db.Uuid
+  project_name        String?
+  clockify_project_id String?
+  client_name         String?
+  clockify_client_id  String?
+  client_id           String?       @db.Uuid
+  task_billability    Boolean?
+  task_name           String?
+  currently_running   Boolean       @default(false)
+  manually_created    Boolean       @default(false)
+  source_type         String        @default("Clockify")
+  manually_updated    Boolean       @default(false)
+  clients             clients?      @relation(fields: [client_id], references: [id])
+  team_members        team_members? @relation(fields: [team_member_id], references: [id])
+
+  @@index([start])
+}
+
+model time_off_policies {
+  id                String              @id @db.Uuid
+  ref_id            String              @unique
+  name              String
+  time_unit         String
+  created_at        DateTime            @default(now())
+  updated_at        DateTime
+  organization_id   String              @db.Uuid
+  organizations     organizations       @relation(fields: [organization_id], references: [id])
+  time_off_requests time_off_requests[]
+}
+
+model time_off_requests {
+  id                 String            @id @db.Uuid
+  ref_id             String            @unique
+  team_member_id     String            @db.Uuid
+  time_off_policy_id String            @db.Uuid
+  status             String
+  requested_units    Float?
+  balance            Float
+  start_date         DateTime
+  end_date           DateTime
+  timezone           String
+  requested_notes    String?
+  reply_notes        String?
+  user_id            String?           @db.Uuid
+  created_at         DateTime          @default(now())
+  updated_at         DateTime
+  team_members       team_members      @relation(fields: [team_member_id], references: [id])
+  time_off_policies  time_off_policies @relation(fields: [time_off_policy_id], references: [id])
+  users              users?            @relation(fields: [user_id], references: [id])
+}
+
+model time_slots {
+  id             String      @id @db.Uuid
+  start_at       DateTime    @db.Date
+  end_at         DateTime?   @db.Date
+  on_going       Boolean     @default(false)
+  hours_per_week Int
+  created_at     DateTime    @default(now())
+  updated_at     DateTime?
+  assignment_id  String      @db.Uuid
+  deleted        Boolean     @default(false)
+  assignments    assignments @relation(fields: [assignment_id], references: [id])
+}
+
+model travel_documents {
+  id              String    @id @db.Uuid
+  type            String
+  number          String?
+  issue_date      DateTime  @db.Date
+  expiration_date DateTime? @db.Date
+  country         String?
+  visa_type       String?
+  employee_id     String    @db.Uuid
+  comment         String?
+  visa_status     String?
+  employees       employees @relation(fields: [employee_id], references: [id])
+}
+
+model users {
+  id                                                                String                          @id @db.Uuid
+  email                                                             String
+  slack_id                                                          String?                         @unique
+  name                                                              String
+  given_name                                                        String
+  family_name                                                       String
+  current_hashed_refresh_token                                      String?
+  created_at                                                        DateTime                        @default(now())
+  updated_at                                                        DateTime?
+  enabled                                                           Boolean                         @default(true)
+  slack_user_access_token                                           String?                         @unique
+  organization_id                                                   String?                         @db.Uuid
+  account_owner_reports_account_owner_reports_author_idTousers      account_owner_reports[]         @relation("account_owner_reports_author_idTousers")
+  account_owner_reports_account_owner_reports_reviewer_idTousers    account_owner_reports[]         @relation("account_owner_reports_reviewer_idTousers")
+  activities                                                        activities[]
+  assignments                                                       assignments[]
+  attachments_attachments_created_by_idTousers                      attachments[]                   @relation("attachments_created_by_idTousers")
+  attachments_attachments_user_idTousers                            attachments?                    @relation("attachments_user_idTousers")
+  attempt_reviews                                                   attempt_reviews[]
+  comments                                                          comments[]
+  email_templates                                                   email_templates[]
+  emails                                                            emails[]
+  employees                                                         employees?
+  interviews                                                        interviews[]
+  invites                                                           invites[]
+  job_applications                                                  job_applications[]
+  mentions                                                          mentions[]
+  organizations_organizations_user_owner_idTousers                  organizations?                  @relation("organizations_user_owner_idTousers")
+  organizations_to_integrations                                     organizations_to_integrations[]
+  performance_reviews_performance_reviews_first_reviewer_idTousers  performance_reviews[]           @relation("performance_reviews_first_reviewer_idTousers")
+  performance_reviews_performance_reviews_second_reviewer_idTousers performance_reviews[]           @relation("performance_reviews_second_reviewer_idTousers")
+  score_card_evaluations                                            score_card_evaluations[]
+  signature_requests                                                signature_requests[]
+  tags                                                              tags[]
+  team_status_reports_team_status_reports_author_idTousers          team_status_reports[]           @relation("team_status_reports_author_idTousers")
+  team_status_reports_team_status_reports_reviewer_idTousers        team_status_reports[]           @relation("team_status_reports_reviewer_idTousers")
+  time_off_requests                                                 time_off_requests[]
+  organizations_users_organization_idToorganizations                organizations?                  @relation("users_organization_idToorganizations", fields: [organization_id], references: [id])
+  esignature_templates                                              esignature_templates[]          @relation("EsignatureTemplateToUser")
+  permissions                                                       permissions[]                   @relation("PermissionToUser")
+  roles                                                             roles[]                         @relation("RoleToUser")
+}
+
+model webhook_events {
+  id                    String                  @id @db.Uuid
+  name                  String
+  code                  String                  @unique
+  description           String?
+  created_at            DateTime                @default(now())
+  updated_at            DateTime
+  configuration         Json?
+  WebhookToWebhookEvent WebhookToWebhookEvent[]
+}
+
+model webhooks {
+  id                    String                  @id @db.Uuid
+  name                  String
+  description           String?
+  url                   String?
+  organization_id       String                  @db.Uuid
+  created_at            DateTime                @default(now())
+  updated_at            DateTime
+  secret_key            String?
+  active                Boolean                 @default(true)
+  WebhookToWebhookEvent WebhookToWebhookEvent[]
+  organizations         organizations           @relation(fields: [organization_id], references: [id])
+}
+
+enum Category {
+  TECHNOLOGY
+  COMPETENCE
+}
+
+enum EnglishLevel {
+  BASIC
+  PROFICIENT
+  ADVANCED
+}
+
+enum Seniority {
+  TRAINEE
+  JUNIOR
+  JUNIOR_MID
+  MID
+  MID_SENIOR
+  SENIOR
+}
+
+enum SlackMemberStatus {
+  NEW
+  ADDED
+  IGNORED
+}
