@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "NODE_OPTIONS='--max-old-space-size=4096' tsc",
     "start": "node dist/index.js",
     "dev": "NODE_OPTIONS='--max-old-space-size=4096' ts-node src/index.ts",
     "prisma:generate": "npx prisma generate",
