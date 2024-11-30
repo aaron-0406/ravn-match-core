@@ -8,7 +8,7 @@ const app = express();
 app.use(express.json());
 
 //CORS
-const whitelist = ["http://localhost:5173", "http://127.0.0.1:5173", "http://54.227.199.42:5173"];
+const whitelist = ["http://localhost:5173", "http://127.0.0.1:5173", "http://54.227.199.42:5173", "http://18.206.133.13:5173"];
 const options: CorsOptions = {
   origin: (origin, callback) => {
     if (whitelist.includes(origin ?? "") || !origin) {
